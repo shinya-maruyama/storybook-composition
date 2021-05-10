@@ -7,7 +7,7 @@ on:
       - develop
 
 jobs:
-  build_storybook_fe_dashboard:
+  deploy_storybook_fe_dashboard:
     runs-on: ubuntu-18.04
     defaults:
       run:
@@ -29,15 +29,22 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Build storybook fe-dashboard
-      - run: yarn build-storybook
+        run: yarn build-storybook
+      - name: Deploy fe-dashboard storybook
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./fe-dashboard/storybook-static
+          destination_dir: fe-dashboard
+          enable_jekyll: true
 
-  build_storybook_fe_portal:
+  deploy_storybook_fe_portal:
     runs-on: ubuntu-18.04
     defaults:
       run:
         working-directory: ./fe-portal
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: Setup Node
         uses: actions/setup-node@v2.1.2
         with:
@@ -53,21 +60,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Build storybook fe-portal
-      - run: yarn build-storybook
-
-  deploy:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Deploy fe-dashboard storybook
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./fe-dashboard/storybook-static
-          destination_dir: fe-dashboard
-          enable_jekyll: true
-
+        run: yarn build-storybook
       - name: Deploy fe-portal storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
