@@ -57,6 +57,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build storybook fe-dashboard
         run: yarn build-storybook
+      - run: npx sb extract
       - name: Deploy fe-dashboard storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -88,6 +89,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build storybook fe-portal
         run: yarn build-storybook
+      - run: npx sb extract
       - name: Deploy fe-portal storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
