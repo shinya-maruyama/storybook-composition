@@ -99,6 +99,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./storybook-static
+          publish_dir: ./storybook-composition/storybook-static
           destination_dir: storybook
           enable_jekyll: true
