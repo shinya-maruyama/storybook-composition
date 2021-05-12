@@ -15,11 +15,13 @@ module.exports = {
     return {
       'fe-portal': {
         "title": "fe-portal",
-        "url": "https://shinya-maruyama.github.io/storybook-composition/fe-portal"
+        // "url": "https://shinya-maruyama.github.io/storybook-composition/fe-portal"
+        "url": "../fe-portal"
       },
       'fe-dashboard': {
         "title": "fe-dashboard",
-        "url": "https://shinya-maruyama.github.io/storybook-composition/fe-dashboard"
+        // "url": "https://shinya-maruyama.github.io/storybook-composition/fe-dashboard"
+        "url": "../fe-dashboard"
       },
     };
   },
