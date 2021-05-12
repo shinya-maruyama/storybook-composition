@@ -1,8 +1,6 @@
 name: on_pr
 
-on:
-  pull_request:
-    types: [opened]
+on: pull_request
 
 jobs:
   comment:
