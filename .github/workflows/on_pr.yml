@@ -110,6 +110,10 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: add comment url
         uses: actions/github-script@v3
         with:
@@ -117,8 +121,7 @@ jobs:
           script: |
             // storybook preview URL for this PR
             const url = 'https://shinya-maruyama.github.io/storybook-composition/${{github.head_ref}}/storybook/'
-            const commitHash = github.event.pull_request.head.sha
-            const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ commitHash }}):\n${{ url }}'
+            const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ $GITHUB_CONTEXT }}):\n${{ url }}'
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
