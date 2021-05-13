@@ -1,103 +1,125 @@
 name: on_pr
 
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, reopend, closed]
 
 jobs:
-#   deploy_storybook_fe_dashboard:
-#     runs-on: ubuntu-18.04
-#     defaults:
-#       run:
-#         working-directory: ./fe-dashboard
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Setup Node
-#         uses: actions/setup-node@v2.1.2
-#         with:
-#           node-version: '12.x'
+  check_type:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: check expires
+        id: expires
+#         if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.base_ref != "develop" }}
+        if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' }}
+        run: exit 0
+      - uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+      - run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+          test -d ${{ github.event.pull_request.number }} || exit 0
+          git rm -r ${{ github.event.pull_request.number }}
+          git commit -m "delete storybook preview for closed PR by GitHub Action"
+          git push
 
-#       - name: Cache dependencies
-#         uses: actions/cache@v2
-#         with:
-#           path: ~/.npm
-#           key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-#           restore-keys: |
-#             ${{ runner.os }}-node-
-#       - name: Install dependencies
-#         run: yarn install --frozen-lockfile
-#       - name: Build storybook fe-dashboard
-#         run: yarn build-storybook
-#       - run: npx sb extract
-#       - name: Deploy fe-dashboard storybook
-#         uses: peaceiris/actions-gh-pages@v3
-#         with:
-#           github_token: ${{ secrets.GITHUB_TOKEN }}
-#           publish_dir: ./fe-dashboard/storybook-static
-#           destination_dir: ${{github.head_ref}}/fe-dashboard
-#           enable_jekyll: true
+  deploy_storybook_fe_dashboard:
+    runs-on: ubuntu-18.04
+    defaults:
+      run:
+        working-directory: ./fe-dashboard
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: '12.x'
 
-#   deploy_storybook_fe_portal:
-#     runs-on: ubuntu-18.04
-#     defaults:
-#       run:
-#         working-directory: ./fe-portal
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Setup Node
-#         uses: actions/setup-node@v2.1.2
-#         with:
-#           node-version: '12.x'
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build storybook fe-dashboard
+        run: yarn build-storybook
+      - run: npx sb extract
+      - name: Deploy fe-dashboard storybook
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./fe-dashboard/storybook-static
+          destination_dir: ${{github.head_ref}}/fe-dashboard
+          enable_jekyll: true
 
-#       - name: Cache dependencies
-#         uses: actions/cache@v2
-#         with:
-#           path: ~/.npm
-#           key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-#           restore-keys: |
-#             ${{ runner.os }}-node-
-#       - name: Install dependencies
-#         run: yarn install --frozen-lockfile
-#       - name: Build storybook fe-portal
-#         run: yarn build-storybook
-#       - run: npx sb extract
-#       - name: Deploy fe-portal storybook
-#         uses: peaceiris/actions-gh-pages@v3
-#         with:
-#           github_token: ${{ secrets.GITHUB_TOKEN }}
-#           publish_dir: ./fe-portal/storybook-static
-#           destination_dir: ${{github.head_ref}}/fe-portal
-#           enable_jekyll: true
+  deploy_storybook_fe_portal:
+    runs-on: ubuntu-18.04
+    defaults:
+      run:
+        working-directory: ./fe-portal
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: '12.x'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build storybook fe-portal
+        run: yarn build-storybook
+      - run: npx sb extract
+      - name: Deploy fe-portal storybook
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./fe-portal/storybook-static
+          destination_dir: ${{github.head_ref}}/fe-portal
+          enable_jekyll: true
 
   deploy_storybook_composition:
     runs-on: ubuntu-18.04
-#     needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
-#     defaults:
-#       run:
-#         working-directory: ./storybook-composition
+    needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
+    defaults:
+      run:
+        working-directory: ./storybook-composition
     steps:
       - uses: actions/checkout@v2
-#       - name: Setup Node
-#         uses: actions/setup-node@v2.1.2
-#         with:
-#           node-version: '12.x'
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: '12.x'
 
-#       - name: Cache dependencies
-#         uses: actions/cache@v2
-#         with:
-#           path: ~/.npm
-#           key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-#           restore-keys: |
-#             ${{ runner.os }}-node-
-#       - name: Install dependencies
-#         run: yarn install --frozen-lockfile
-#       - name: Build storybook
-#         run: yarn build-storybook
-#       - name: Deploy storybook
-#         uses: peaceiris/actions-gh-pages@v3
-#         with:
-#           github_token: ${{ secrets.GITHUB_TOKEN }}
-#           publish_dir: ./storybook-composition/storybook-static
-#           destination_dir: ${{github.head_ref}}/storybook
-#           enable_jekyll: true
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build storybook
+        run: yarn build-storybook
+      - name: Deploy storybook
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./storybook-composition/storybook-static
+          destination_dir: ${{github.head_ref}}/storybook
+          enable_jekyll: true
 
       - name: add comment url
         uses: actions/github-script@v3
