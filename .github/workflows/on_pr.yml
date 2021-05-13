@@ -101,13 +101,13 @@ jobs:
 
       - name: add comment url
         uses: actions/github-script@v3
+        env:
+          STORYBOOK_PATH: https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/
+          COMMIT_HASH: ${{ github.event.pull_request.head.sha }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const storybookPath = 'https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/'
-            const commitHash = ${{ github.event.pull_request.head.sha }}
-            const commentBody = `Visit the storybook preview URL for this PR (updated for commit ${commitHash}):\n${storybookPath}`
-            console.log(commentBody)
+            const commentBody = `Visit the storybook preview URL for this PR (updated for commit ${COMMIT_HASH}):\n${STORYBOOK_PATH}`
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
