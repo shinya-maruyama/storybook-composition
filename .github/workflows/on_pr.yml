@@ -116,4 +116,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const storybookPath = "https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/"
-
+            const commentBody = "Visit the storybook preview URL for this PR (updated for commit ${{ toJson(github) }}):\n ${{ storybookPath }}"
