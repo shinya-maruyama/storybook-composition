@@ -116,7 +116,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // storybook preview URL for this PR
-            const url = 'https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/'
+            const storybookPath = 'https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/'
             const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ toJson(github) }}):\n${{ url }}'
 
             // Get the existing comments.
@@ -127,7 +127,7 @@ jobs:
             })
 
             // Find any comment already made by the bot.
-            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes(url))
+            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes(storybookPath))
 
             if (botComment) {
               await github.issues.updateComment({
