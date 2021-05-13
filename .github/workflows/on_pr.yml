@@ -116,7 +116,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // storybook preview URL for this PR
-            const storybookPath = 'https://shinya-maruyama.github.io/storybook-composition/${{ github.head_ref }}/storybook/'
+            const storybookPath = 'https://shinya-maruyama.github.io/storybook-composition/storybook/'
             const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ toJson(github) }}):\n${{ storybookPath }}'
 
             // Get the existing comments.
