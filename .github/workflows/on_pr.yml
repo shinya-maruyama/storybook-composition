@@ -103,3 +103,38 @@ jobs:
           publish_dir: ./storybook-composition/storybook-static
           destination_dir: ${{github.head_ref}}/storybook
           enable_jekyll: true
+
+  notification:
+    runs-on: ubuntu-18.04
+    needs: [deploy_storybook_composition]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: add comment url
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const {data: comments} = await github.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Visit the preview URL for this PR (updated for commit ${commit}):story\https://shinya-maruyama.github.io/storybook-composition/${{github.head_ref}}/storybook/'
+            })
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: data
+            })
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comments
+            })
