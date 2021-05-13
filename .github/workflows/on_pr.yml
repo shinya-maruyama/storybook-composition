@@ -110,12 +110,10 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
       - name: add comment url
         uses: actions/github-script@v3
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
