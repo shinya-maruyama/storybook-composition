@@ -117,8 +117,8 @@ jobs:
           script: |
             // storybook preview URL for this PR
             const url = 'https://shinya-maruyama.github.io/storybook-composition/${{github.head_ref}}/storybook/'
-            const commit = github.event.pull_request.head.sha
-            const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ commit }}):\n${{ url }}'
+            const commitHash = github.event.pull_request.head.sha
+            const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ commitHash }}):\n${{ url }}'
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
