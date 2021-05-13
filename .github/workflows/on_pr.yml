@@ -116,31 +116,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const branchName = github.head_ref
-            const storybookPath = await "https://shinya-maruyama.github.io/storybook-composition/${{ branchName }}/storybook/"
-            const commentBody = 'Visit the storybook preview URL for this PR (updated for commit ${{ toJson(github) }}):\n${{ storybookPath }}'
-
-            // Get the existing comments.
-            const {data: comments} = await github.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.number,
-            })
-
-            // Find any comment already made by the bot.
-            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes(storybookPath))
-
-            if (botComment) {
-              await github.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              })
-            } else {
-              await github.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.number,
-                body: commentBody
-              })
-            }
