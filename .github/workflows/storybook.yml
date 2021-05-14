@@ -1,11 +1,11 @@
-name: on_pr
+name: storybook
 
 on:
   # プッシュもしくはPull Requestでワークフローをトリガーする
   # ただしプッシュはdevelopブランチの場合のみ
-  push:
-    branches:
-      - develop
+#   push:
+#     branches:
+#       - develop
   pull_request:
     types: [opened, synchronize, reopend, closed]
 
@@ -67,12 +67,13 @@ jobs:
       - name: Build storybook fe-dashboard
         run: yarn build-storybook
       - run: npx sb extract
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/fe-dashboard"
       - name: Deploy fe-dashboard storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-dashboard/storybook-static
-          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-dashboard
+          destination_dir: ${{ needs.check_tree_hash.outputs.target }}/fe-dashboard
           enable_jekyll: true
 
   deploy_storybook_fe_portal:
@@ -101,12 +102,13 @@ jobs:
       - name: Build storybook fe-portal
         run: yarn build-storybook
       - run: npx sb extract
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/fe-fe-portal"
       - name: Deploy fe-portal storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-portal/storybook-static
-          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-portal
+          destination_dir: ${{ needs.check_tree_hash.outputs.target }}/fe-portal
           enable_jekyll: true
 
   deploy_storybook_composition:
@@ -134,6 +136,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build storybook
         run: yarn build-storybook
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/storybook"
       - name: Deploy storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
