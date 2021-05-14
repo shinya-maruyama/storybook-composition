@@ -34,7 +34,7 @@ jobs:
           git push
       - name: next step
         run: |
-        echo "next step"
+          echo "next step"
       - name: dist_target
         id: dist_target
         run: |
