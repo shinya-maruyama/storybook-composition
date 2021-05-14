@@ -1,11 +1,11 @@
-name: on_pr
+name: storybook
 
 on:
   # プッシュもしくはPull Requestでワークフローをトリガーする
   # ただしプッシュはdevelopブランチの場合のみ
-  push:
-    branches:
-      - develop
+#   push:
+#     branches:
+#       - develop
   pull_request:
     types: [opened, synchronize, reopend, closed]
 
@@ -28,17 +28,20 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
-          test -d ${{ github.event.pull_request.number }} || exit 0
+          test -d ${{ github.event.pull_request.number }} || echo "No such directory \"${{ github.event.pull_request.number }}\"" && exit 0
           git rm -r ${{ github.event.pull_request.number }}
           git commit -m "delete storybook preview for closed PR by GitHub Action"
           git push
+          exit 0
       - name: next step
         run: |
           echo "next step"
       - name: dist_target
         id: dist_target
+        # pull_requestの時は、{プルリクエストのID番号}/配下にdeploy
+        # pushの時は、develop/配下にdeploy
         run: |
-          ${{ github.event_name == 'pull_request'}} && TARGET='develop' || TARGET=${{github.head_ref}}
+          ${{ github.event_name == 'pull_request'}} && TARGET=${{ github.event.pull_request.number }} || TARGET='develop'
           echo "::set-output name=target::${TARGET}"
 
   deploy_storybook_fe_dashboard:
@@ -67,12 +70,13 @@ jobs:
       - name: Build storybook fe-dashboard
         run: yarn build-storybook
       - run: npx sb extract
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/fe-dashboard"
       - name: Deploy fe-dashboard storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-dashboard/storybook-static
-          destination_dir: ${{ steps.step-foo.outputs.FOO }}/fe-dashboard
+          destination_dir: ${{ needs.check_tree_hash.outputs.target }}/fe-dashboard
           enable_jekyll: true
 
   deploy_storybook_fe_portal:
@@ -101,18 +105,19 @@ jobs:
       - name: Build storybook fe-portal
         run: yarn build-storybook
       - run: npx sb extract
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/fe-fe-portal"
       - name: Deploy fe-portal storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-portal/storybook-static
-          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-portal
+          destination_dir: ${{ needs.check_tree_hash.outputs.target }}/fe-portal
           enable_jekyll: true
 
   deploy_storybook_composition:
     runs-on: ubuntu-18.04
     if: github.event.action != 'closed'
-    needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
+    needs: [check_tree_hash, deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
     defaults:
       run:
         working-directory: ./storybook-composition
@@ -134,6 +139,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build storybook
         run: yarn build-storybook
+      - run: echo "${{ needs.check_tree_hash.outputs.target }}/storybook"
       - name: Deploy storybook
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -143,6 +149,7 @@ jobs:
           enable_jekyll: true
 
       - name: add comment url
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
