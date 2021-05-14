@@ -166,6 +166,7 @@ jobs:
             }
 
   check_expires:
+    name: Expires storybook preview for this PR
     runs-on: ubuntu-18.04
     if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
     steps:
