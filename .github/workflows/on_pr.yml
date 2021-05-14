@@ -1,22 +1,30 @@
 name: on_pr
 
 on:
+  # プッシュもしくはPull Requestでワークフローをトリガーする
+  # ただしプッシュはdevelopブランチの場合のみ
+  push:
+    branches:
+      - develop
   pull_request:
     types: [opened, synchronize, reopend, closed]
 
+
+
 jobs:
-  check_type:
+  check_tree_hash:
     runs-on: ubuntu-18.04
+    outputs:
+      target: ${{ steps.dist_target.outputs.target }}
     steps:
       - name: check expires
-        id: expires
-#         if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.base_ref != "develop" }}
-        if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' }}
-        run: exit 0
-      - uses: actions/checkout@v2
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+        uses: actions/checkout@v2
         with:
           ref: gh-pages
-      - run: |
+      - name: expires
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+        run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
@@ -24,9 +32,19 @@ jobs:
           git rm -r ${{ github.event.pull_request.number }}
           git commit -m "delete storybook preview for closed PR by GitHub Action"
           git push
+      - name: next step
+        run: |
+        echo "next step"
+      - name: dist target
+        id: dist_target
+        run: |
+          ${{ github.event_name == 'pull_request'}} && TARGET='develop' || TARGET=${{github.head_ref}}
+          echo "::set-output name=target::${TARGET}"
 
   deploy_storybook_fe_dashboard:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
+    needs: [check_type]
     defaults:
       run:
         working-directory: ./fe-dashboard
@@ -54,11 +72,13 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-dashboard/storybook-static
-          destination_dir: ${{github.head_ref}}/fe-dashboard
+          destination_dir: ${{ steps.step-foo.outputs.FOO }}/fe-dashboard
           enable_jekyll: true
 
   deploy_storybook_fe_portal:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
+    needs: [check_type]
     defaults:
       run:
         working-directory: ./fe-portal
@@ -86,11 +106,12 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-portal/storybook-static
-          destination_dir: ${{github.head_ref}}/fe-portal
+          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-portal
           enable_jekyll: true
 
   deploy_storybook_composition:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
     needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
     defaults:
       run:
@@ -118,7 +139,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./storybook-composition/storybook-static
-          destination_dir: ${{github.head_ref}}/storybook
+          destination_dir: ${{needs.check_tree_hash.outputs.target }}/storybook
           enable_jekyll: true
 
       - name: add comment url
