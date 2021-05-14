@@ -3,13 +3,11 @@ name: storybook
 on:
   # プッシュもしくはPull Requestでワークフローをトリガーする
   # ただしプッシュはdevelopブランチの場合のみ
-#   push:
-#     branches:
-#       - develop
+  push:
+    branches:
+      - develop
   pull_request:
     types: [opened, synchronize, reopend, closed]
-
-
 
 jobs:
   check_tree_hash:
@@ -17,22 +15,6 @@ jobs:
     outputs:
       target: ${{ steps.dist_target.outputs.target }}
     steps:
-      - name: check expires
-        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
-      - name: expires
-        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
-          test -d ${{ github.event.pull_request.number }} || exit 0
-          git rm -r ${{ github.event.pull_request.number }}
-          git commit -m "delete storybook preview for closed PR by GitHub Action"
-          git push
-          exit 0
       - name: dist_target
         id: dist_target
         # pull_requestの時は、{プルリクエストのID番号}/配下にdeploy
@@ -183,3 +165,20 @@ jobs:
               })
             }
 
+  check_expires:
+    runs-on: ubuntu-18.04
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+    steps:
+      - name: check expires
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+      - name: expires
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+          test -d ${{ github.event.pull_request.number }} || exit 0
+          git rm -r ${{ github.event.pull_request.number }}
+          git commit -m "delete storybook preview for closed PR by GitHub Action"
+          git push
