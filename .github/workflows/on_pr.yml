@@ -1,14 +1,50 @@
-name: storybook
+name: on_pr
 
-# When Pull Request is merged to develop
 on:
+  # プッシュもしくはPull Requestでワークフローをトリガーする
+  # ただしプッシュはdevelopブランチの場合のみ
   push:
     branches:
       - develop
+  pull_request:
+    types: [opened, synchronize, reopend, closed]
+
+
 
 jobs:
+  check_tree_hash:
+    runs-on: ubuntu-18.04
+    outputs:
+      target: ${{ steps.dist_target.outputs.target }}
+    steps:
+      - name: check expires
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+      - name: expires
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote set-url origin https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+          test -d ${{ github.event.pull_request.number }} || exit 0
+          git rm -r ${{ github.event.pull_request.number }}
+          git commit -m "delete storybook preview for closed PR by GitHub Action"
+          git push
+      - name: next step
+        run: |
+          echo "next step"
+      - name: dist_target
+        id: dist_target
+        run: |
+          ${{ github.event_name == 'pull_request'}} && TARGET=${{github.head_ref}} || TARGET='develop'
+          echo "::set-output name=target::${TARGET}"
+
   deploy_storybook_fe_dashboard:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
+    needs: [check_tree_hash]
     defaults:
       run:
         working-directory: ./fe-dashboard
@@ -36,11 +72,13 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-dashboard/storybook-static
-          destination_dir: fe-dashboard
+          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-dashboard
           enable_jekyll: true
 
   deploy_storybook_fe_portal:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
+    needs: [check_tree_hash]
     defaults:
       run:
         working-directory: ./fe-portal
@@ -68,11 +106,12 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fe-portal/storybook-static
-          destination_dir: fe-portal
+          destination_dir: ${{needs.check_tree_hash.outputs.target }}/fe-portal
           enable_jekyll: true
 
   deploy_storybook_composition:
     runs-on: ubuntu-18.04
+    if: github.event.action != 'closed'
     needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
     defaults:
       run:
@@ -100,5 +139,43 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./storybook-composition/storybook-static
-          destination_dir: storybook
+          destination_dir: ${{needs.check_tree_hash.outputs.target }}/storybook
           enable_jekyll: true
+
+      - name: add comment url
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const storybookPath = 'https://shinya-maruyama.github.io/storybook-composition/${{ github.event.pull_request.number }}/storybook/'
+            const commentBody =
+            `Visit the Storybook preview URL for this PR (updated for commit ${{ github.event.pull_request.head.sha }}):
+            
+            ${storybookPath}`
+            
+            // Get the existing comments.
+            const {data: comments} = await github.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.number,
+            })
+
+            // Find any comment already made by the bot.
+            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes(storybookPath))
+
+            if (botComment) {
+              await github.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              })
+            } else {
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.number,
+                body: commentBody
+              })
+            }
