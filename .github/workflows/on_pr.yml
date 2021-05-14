@@ -35,7 +35,7 @@ jobs:
       - name: next step
         run: |
         echo "next step"
-      - name: dist target
+      - name: dist_target
         id: dist_target
         run: |
           ${{ github.event_name == 'pull_request'}} && TARGET='develop' || TARGET=${{github.head_ref}}
