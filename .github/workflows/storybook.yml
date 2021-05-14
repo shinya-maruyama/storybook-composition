@@ -38,7 +38,7 @@ jobs:
       - name: dist_target
         id: dist_target
         run: |
-          ${{ github.event_name == 'pull_request'}} && TARGET=${{github.head_ref}} || TARGET='develop'
+          ${{ github.event_name == 'pull_request'}} && TARGET=${{github.event.pull_request.head.sha}} || TARGET='develop'
           echo "::set-output name=target::${TARGET}"
 
   deploy_storybook_fe_dashboard:
