@@ -112,7 +112,7 @@ jobs:
   deploy_storybook_composition:
     runs-on: ubuntu-18.04
     if: github.event.action != 'closed'
-    needs: [deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
+    needs: [check_tree_hash, deploy_storybook_fe_dashboard, deploy_storybook_fe_portal]
     defaults:
       run:
         working-directory: ./storybook-composition
